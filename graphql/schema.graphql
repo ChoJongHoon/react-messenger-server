@@ -1,0 +1,40 @@
+scalar Date
+scalar GraphQLObjectId
+
+type User {
+  _id: String!
+  name: String!
+  imageUrl: String
+  online: Boolean
+}
+
+type Message {
+  _id: GraphQLObjectId
+  senderId: String!
+  receiverId: String!
+  contents: String!
+  time: Date!
+}
+
+type Query {
+  users: [User]!
+  user(_id: String!): User
+  messages(userId1: String!, userId2: String!): [Message]
+}
+
+type Mutation {
+  addUser(_id: String!, name: String!, imageUrl: String): User
+  sendMessage(
+    senderId: String!
+    receiverId: String!
+    contents: String!
+    time: Date!
+  ): Message
+  # userConnectChange(_id: String!, online: Boolean!): User
+  # userInfoChange(_id: String!, name: String!, imageUrl: String): User
+}
+
+type Subscription {
+  newUser: User
+  newMessage(roomId: String): Message
+}

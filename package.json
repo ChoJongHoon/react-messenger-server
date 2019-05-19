@@ -1,0 +1,23 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "engines": {
+    "node": "10.15.0",
+    "npm": "6.4.1"
+  },
+  "dependencies": {
+    "graphql-scalar-objectid": "^0.1.1",
+    "graphql-yoga": "^1.17.4",
+    "mongoose": "^5.5.5"
+  },
+  "scripts": {
+    "start": "nodemon --exec babel-node index.js"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-stage-3": "^6.24.1"
+  }
+}
