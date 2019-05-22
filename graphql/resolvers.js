@@ -3,25 +3,12 @@ import { GraphQLScalarType } from "graphql";
 import { Kind } from "graphql/language";
 import User from "../db/User";
 import Message from "../db/Message";
+import Todo from "../db/Todo";
 
 const pubsub = new PubSub();
 const NEW_USER = "NEW_USER";
 const NEW_MESSAGE = "NEW_MESSAGE";
-let rooms = [];
-
-User.find()
-  .sort({ _id: 1 })
-  .then(users => {
-    let usersArray = [];
-    users.forEach(u => {
-      usersArray.push(u._id);
-    });
-    for (let i = 0; i < usersArray.length; i++) {
-      for (let j = i + 1; j < usersArray.length; j++) {
-        rooms.push(usersArray[i] + usersArray[j]);
-      }
-    }
-  });
+const NEW_TODO = "NEW_TODO";
 
 const resolvers = {
   Query: {
@@ -38,6 +25,9 @@ const resolvers = {
           { $and: [{ senderId: userId2 }, { receiverId: userId1 }] }
         ]
       }).sort({ time: 1 });
+    },
+    todos: () => {
+      return Todo.find();
     }
   },
   Mutation: {
@@ -53,7 +43,14 @@ const resolvers = {
         newUser
       });
 
-      return await newUser.save();
+      User.findById(_id, (err, user) => {
+        if (!user) {
+          return newUser.save();
+        } else {
+          user.online = true;
+          return user.save();
+        }
+      });
     },
     sendMessage: async (_, { senderId, receiverId, contents, time }) => {
       let newMessage = new Message({
@@ -69,6 +66,52 @@ const resolvers = {
       });
 
       return await newMessage.save();
+    },
+    addTodo: async (_, { text }) => {
+      let newTodo = new Todo({
+        text,
+        done: true
+      });
+
+      pubsub.publish(NEW_TODO, {
+        newTodo
+      });
+
+      return await newTodo.save();
+    },
+    removeTodo: async (_, { _id }) => {
+      Todo.deleteOne({ _id }, err => {
+        if (err) {
+          console.error("removeTodo ERROR");
+          return false;
+        }
+      });
+
+      return true;
+    },
+    todoToggle: async (_, { _id }) => {
+      return await Todo.findById(_id, (err, todo) => {
+        if (err) {
+          console.error("todoToggle ERROR");
+        }
+        if (!todo) {
+          console.error("todo is not found");
+        }
+        todo.done = todo.done ? false : true;
+        todo.save();
+      });
+    },
+    userConnectChange: async (_, { _id, online }) => {
+      return await User.findById(_id, (err, user) => {
+        if (err) {
+          console.error("userConnectChange ERROR");
+        }
+        if (!user) {
+          console.error("user is not found");
+        }
+        user.online = online;
+        user.save();
+      });
     }
   },
   Subscription: {
@@ -80,6 +123,9 @@ const resolvers = {
         () => pubsub.asyncIterator(NEW_MESSAGE),
         (payload, args) => payload.roomId === args.roomId
       )
+    },
+    newTodo: {
+      subscribe: () => pubsub.asyncIterator(NEW_TODO)
     }
   },
   Date: new GraphQLScalarType({

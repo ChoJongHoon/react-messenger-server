@@ -2,7 +2,7 @@ scalar Date
 scalar GraphQLObjectId
 
 type User {
-  _id: String!
+  _id: String
   name: String!
   imageUrl: String
   online: Boolean
@@ -16,10 +16,17 @@ type Message {
   time: Date!
 }
 
+type Todo {
+  _id: GraphQLObjectId
+  text: String
+  done: Boolean!
+}
+
 type Query {
-  users: [User]!
+  users: [User]
   user(_id: String!): User
   messages(userId1: String!, userId2: String!): [Message]
+  todos: [Todo]
 }
 
 type Mutation {
@@ -30,11 +37,14 @@ type Mutation {
     contents: String!
     time: Date!
   ): Message
-  # userConnectChange(_id: String!, online: Boolean!): User
-  # userInfoChange(_id: String!, name: String!, imageUrl: String): User
+  addTodo(text: String): Todo
+  removeTodo(_id: GraphQLObjectId): Boolean
+  todoToggle(_id: GraphQLObjectId): Todo
+  userConnectChange(_id: String!, online: Boolean!): User
 }
 
 type Subscription {
   newUser: User
   newMessage(roomId: String): Message
+  newTodo: Todo
 }
