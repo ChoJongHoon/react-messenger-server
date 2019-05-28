@@ -2,7 +2,8 @@ scalar Date
 scalar GraphQLObjectId
 
 type User {
-  _id: String
+  _id: String!
+  password: String
   name: String!
   imageUrl: String
   online: Boolean
@@ -27,10 +28,11 @@ type Query {
   user(_id: String!): User
   messages(userId1: String!, userId2: String!): [Message]
   todos: [Todo]
+  duplicateCheck(_id: String!): Boolean!
 }
 
 type Mutation {
-  addUser(_id: String!, name: String!, imageUrl: String): User
+  addUser(_id: String!, name: String!, imageUrl: String, password: String): User
   sendMessage(
     senderId: String!
     receiverId: String!

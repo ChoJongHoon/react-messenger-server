@@ -28,29 +28,28 @@ const resolvers = {
     },
     todos: () => {
       return Todo.find();
+    },
+    duplicateCheck: async (_, { _id }) => {
+      if (await User.findOne({ _id })) {
+        return false;
+      } else {
+        return true;
+      }
     }
   },
   Mutation: {
-    addUser: async (_, { _id, name, imageUrl }) => {
+    addUser: async (_, { _id, name, imageUrl, password }) => {
       let newUser = new User({
-        _id: _id,
+        _id,
         name,
         imageUrl,
-        online: true
+        password,
+        online: false
       });
-
       pubsub.publish(NEW_USER, {
         newUser
       });
-
-      User.findById(_id, (err, user) => {
-        if (!user) {
-          return newUser.save();
-        } else {
-          user.online = true;
-          return user.save();
-        }
-      });
+      return newUser.save();
     },
     sendMessage: async (_, { senderId, receiverId, contents, time }) => {
       let newMessage = new Message({
@@ -102,6 +101,10 @@ const resolvers = {
       });
     },
     userConnectChange: async (_, { _id, online }) => {
+      pubsub.publish(NEW_USER, {
+        newUser: User.findById(_id)
+      });
+
       return await User.findById(_id, (err, user) => {
         if (err) {
           console.error("userConnectChange ERROR");
